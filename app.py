@@ -629,102 +629,67 @@ if solved:
         st.pyplot(fig); plt.close(fig)
         
 
-#_________________________Combined Diagram_____________________________________
+# ─────────────────────────────────────────────────────────────────────────────
+# 6. COMBINED DIAGRAM
+# ─────────────────────────────────────────────────────────────────────────────
 with tab_comb:
     # Create a figure with 3 vertical subplots sharing the same X-axis
+    # Increase height (h=12) to give each diagram room to breathe
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(11, 12), sharex=True)
     fig.patch.set_facecolor(PLOT_BG)
 
-    # 1. STRUCTURE PLOT (Top)
+    # --- SUBPLOT 1: STRUCTURE ---
     ax1.plot([0, L], [0, 0], color=BLUE, linewidth=7, solid_capstyle="round", zorder=3)
-   def draw_pinned(ax, x):
-            tri = plt.Polygon(
-                [[x, 0], [x - 0.38*L/10, -0.45], [x + 0.38*L/10, -0.45]],
-                closed=True, color=AMBER, zorder=4, alpha=0.95)
-            ax.add_patch(tri)
-            ax.plot([x - 0.5*L/10, x + 0.5*L/10], [-0.52, -0.52],
-                    color=AMBER, lw=2)
+    
+    # Re-use global support drawing logic
+    if left_support == "Pinned":               draw_pinned(ax1, 0)
+    elif left_support == "Fixed":              draw_fixed(ax1, 0, "left")
+    
+    if right_support == "Pinned":              draw_pinned(ax1, L)
+    elif right_support == "Fixed":             draw_fixed(ax1, L, "right")
+    elif right_support == "Roller (vertical)": draw_roller(ax1, L)
 
-        def draw_fixed(ax, x, side="left"):
-            s = -1 if side == "left" else 1
-            for y in np.linspace(-0.55, 0.55, 8):
-                ax.plot([x, x + s * 0.32*L/10],
-                        [y, y + s * 0.18],
-                        color=AMBER, lw=1.3, alpha=0.75)
-            ax.plot([x, x], [-0.6, 0.6], color=AMBER, lw=3)
+    # Point Load
+    if load_type in ("Point Load", "Both") and P != 0:
+        d = -1 if P < 0 else 1
+        ax1.annotate("", xy=(x_load, 0.05*d), xytext=(x_load, d * 1.0),
+                    arrowprops=dict(arrowstyle="-|>", color=CRIMSON, lw=2.4, mutation_scale=22))
+        ax1.text(x_load, d * 1.15, f"P={P}kN", ha="center", color=CRIMSON, 
+                 fontsize=9, fontfamily="monospace", fontweight="bold")
 
-        def draw_roller(ax, x):
-            c = plt.Circle((x, -0.3), 0.16*L/10, color=AMBER, zorder=4)
-            ax.add_patch(c)
-            ax.plot([x - 0.5*L/10, x + 0.5*L/10], [-0.48, -0.48],
-                    color=AMBER, lw=2)
+    # UDL
+    if load_type in ("UDL", "Both") and q != 0:
+        d = -1 if q < 0 else 1
+        ax1.plot([0, L], [d * 0.7, d * 0.7], color=GREEN, lw=1.8)
+        ax1.text(L / 2, d * 0.88, f"w={q}kN/m", ha="center", color=GREEN, 
+                 fontsize=9, fontfamily="monospace", fontweight="bold")
 
-        if left_support == "Pinned":               draw_pinned(ax, 0)
-        elif left_support == "Fixed":              draw_fixed(ax, 0, "left")
-        if right_support == "Pinned":              draw_pinned(ax, L)
-        elif right_support == "Fixed":             draw_fixed(ax, L, "right")
-        elif right_support == "Roller (vertical)": draw_roller(ax, L)
-
-        # Point load arrow
-        if load_type in ("Point Load", "Both") and P != 0:
-            d = -1 if P < 0 else 1
-            ax.annotate("", xy=(x_load, 0.05*d), xytext=(x_load, d * 1.0),
-                arrowprops=dict(arrowstyle="-|>", color=CRIMSON, lw=2.4,
-                                mutation_scale=22))
-            ax.text(x_load, d * 1.15, f"P = {P} kN", ha="center",
-                    va="bottom" if d > 0 else "top",
-                    color=CRIMSON, fontsize=9.5, fontfamily="monospace",
-                    fontweight="bold")
-
-        # UDL
-        if load_type in ("UDL", "Both") and q != 0:
-            d = -1 if q < 0 else 1
-            xs_udl = np.linspace(0, L, 12)
-            for xi in xs_udl:
-                ax.annotate("", xy=(xi, 0.05*d), xytext=(xi, d * 0.7),
-                    arrowprops=dict(arrowstyle="-|>", color=GREEN, lw=1.4,
-                                    mutation_scale=14))
-            ax.plot([0, L], [d * 0.7, d * 0.7],
-                    color=GREEN, lw=1.8)
-            ax.text(L / 2, d * 0.88, f"w = {q} kN/m", ha="center",
-                    color=GREEN, fontsize=9.5, fontfamily="monospace",
-                    fontweight="bold")
-
-        # Dimension line
-        y_dim = -0.82
-        ax.annotate("", xy=(L, y_dim), xytext=(0, y_dim),
-            arrowprops=dict(arrowstyle="<->", color=DIM_C, lw=1))
-        ax.text(L / 2, y_dim - 0.1, f"L = {L} m", ha="center", va="top",
-                color=DIM_C, fontsize=8.5, fontfamily="monospace")
-
-        ax.set_xlim(-0.8, L + 0.8)
-        ax.set_ylim(-1.15, 1.45)
-        ax.set_xlabel("x  (m)", fontsize=9)
-        ax.set_yticks([])
-        style_ax(ax, "LOADED STRUCTURE")
-        fig.tight_layout(pad=1.5)
-        st.pyplot(fig); plt.close(fig)
     style_ax(ax1, "LOADED STRUCTURE")
     ax1.set_ylim(-1.2, 1.5)
+    ax1.set_yticks([]) # Hide Y-axis for structure
 
-    # 2. SHEAR FORCE DIAGRAM (Middle)
-    ax2.fill_between(xs, Vs, 0, where=(Vs >= 0), color=BLUE_LT, alpha=0.20)
-    ax2.fill_between(xs, Vs, 0, where=(Vs < 0), color=CRIMSON, alpha=0.18)
+    # --- SUBPLOT 2: SHEAR FORCE ---
+    ax2.fill_between(xs, Vs, 0, where=(Vs >= 0), color=BLUE_LT, alpha=0.20, interpolate=True)
+    ax2.fill_between(xs, Vs, 0, where=(Vs < 0), color=CRIMSON, alpha=0.18, interpolate=True)
     ax2.plot(xs, Vs, color=BLUE, linewidth=2)
+    ax2.axhline(0, color=GRID_C, linewidth=1)
     style_ax(ax2, "SHEAR FORCE (kN)")
     if np.any(Vs != 0):
         annotate_peak(ax2, xs, Vs, CRIMSON, "kN")
 
-    # 3. BENDING MOMENT DIAGRAM (Bottom)
-    ax3.fill_between(xs, Ms, 0, where=(Ms >= 0), color=AMBER, alpha=0.20)
-    ax3.fill_between(xs, Ms, 0, where=(Ms < 0), color=GREEN, alpha=0.18)
+    # --- SUBPLOT 3: BENDING MOMENT ---
+    ax3.fill_between(xs, Ms, 0, where=(Ms >= 0), color=AMBER, alpha=0.20, interpolate=True)
+    ax3.fill_between(xs, Ms, 0, where=(Ms < 0), color=GREEN, alpha=0.18, interpolate=True)
     ax3.plot(xs, Ms, color=AMBER, linewidth=2)
+    ax3.axhline(0, color=GRID_C, linewidth=1)
     style_ax(ax3, "BENDING MOMENT (kN·m)")
     if np.any(Ms != 0):
         annotate_peak(ax3, xs, Ms, BLUE, "kN·m")
 
     ax3.set_xlabel("Span (m)")
-    fig.tight_layout(pad=2.0)
+    
+    # Final layout adjustments
+    fig.tight_layout(pad=3.0)
     st.pyplot(fig)
     plt.close(fig)
 # ── Footer ────────────────────────────────────────────────────────────────────
