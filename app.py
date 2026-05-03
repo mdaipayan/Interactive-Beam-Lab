@@ -626,7 +626,40 @@ if solved:
         for t in leg.get_texts(): t.set_color(TEXT_C)
         fig.tight_layout(pad=1.5)
         st.pyplot(fig); plt.close(fig)
+# Create a new tab or section for the stacked view
+tab_stacked = st.tabs(["📊 Integrated Analysis"])[0]
 
+with tab_stacked:
+    # Create a figure with 3 vertical subplots sharing the same X-axis
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(11, 12), sharex=True)
+    fig.patch.set_facecolor(PLOT_BG)
+
+    # 1. STRUCTURE PLOT (Top)
+    ax1.plot([0, L], [0, 0], color=BLUE, linewidth=7, solid_capstyle="round", zorder=3)
+    # (Re-use your logic for drawing supports and loads here...)
+    style_ax(ax1, "LOADED STRUCTURE")
+    ax1.set_ylim(-1.2, 1.5)
+
+    # 2. SHEAR FORCE DIAGRAM (Middle)
+    ax2.fill_between(xs, Vs, 0, where=(Vs >= 0), color=BLUE_LT, alpha=0.20)
+    ax2.fill_between(xs, Vs, 0, where=(Vs < 0), color=CRIMSON, alpha=0.18)
+    ax2.plot(xs, Vs, color=BLUE, linewidth=2)
+    style_ax(ax2, "SHEAR FORCE (kN)")
+    if np.any(Vs != 0):
+        annotate_peak(ax2, xs, Vs, CRIMSON, "kN")
+
+    # 3. BENDING MOMENT DIAGRAM (Bottom)
+    ax3.fill_between(xs, Ms, 0, where=(Ms >= 0), color=AMBER, alpha=0.20)
+    ax3.fill_between(xs, Ms, 0, where=(Ms < 0), color=GREEN, alpha=0.18)
+    ax3.plot(xs, Ms, color=AMBER, linewidth=2)
+    style_ax(ax3, "BENDING MOMENT (kN·m)")
+    if np.any(Ms != 0):
+        annotate_peak(ax3, xs, Ms, BLUE, "kN·m")
+
+    ax3.set_xlabel("Span (m)")
+    fig.tight_layout(pad=2.0)
+    st.pyplot(fig)
+    plt.close(fig)
 # ── Footer ────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div style="margin-top:32px;padding:12px 0;border-top:1px solid #d0d7e3;
