@@ -18,7 +18,7 @@ right_support = st.sidebar.selectbox("Right Support", ["Pinned", "Fixed", "Rolle
 ss = SystemElements()
 
 # 2. Add Elements (Nodes at 0 and L)
-ss.add_multiple_elements([[0, 0], [L, 0]])
+ss.add_multiple_elements([[0, 0], [L, 0]], n=10)
 
 # 3. Apply Supports (Indeterminate vs Determinate)
 # Fixed: (spring_x, spring_y, spring_roll) = (0, 0, 0) means fully restrained
