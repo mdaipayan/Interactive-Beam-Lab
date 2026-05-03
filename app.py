@@ -658,11 +658,19 @@ with tab_comb:
                  fontsize=9, fontfamily="monospace", fontweight="bold")
 
     # UDL
-    if load_type in ("UDL", "Both") and q != 0:
-        d = -1 if q < 0 else 1
-        ax1.plot([0, L], [d * 0.7, d * 0.7], color=GREEN, lw=1.8)
-        ax1.text(L / 2, d * 0.88, f"w={q}kN/m", ha="center", color=GREEN, 
-                 fontsize=9, fontfamily="monospace", fontweight="bold")
+     if load_type in ("UDL", "Both") and q != 0:
+            d = -1 if q < 0 else 1
+            xs_udl = np.linspace(0, L, 12)
+            for xi in xs_udl:
+                ax.annotate("", xy=(xi, 0.05*d), xytext=(xi, d * 0.7),
+                    arrowprops=dict(arrowstyle="-|>", color=GREEN, lw=1.4,
+                                    mutation_scale=14))
+            ax.plot([0, L], [d * 0.7, d * 0.7],
+                    color=GREEN, lw=1.8)
+            ax.text(L / 2, d * 0.88, f"w = {q} kN/m", ha="center",
+                    color=GREEN, fontsize=9.5, fontfamily="monospace",
+                    fontweight="bold")
+
 
     style_ax(ax1, "LOADED STRUCTURE")
     ax1.set_ylim(-1.2, 1.5)
