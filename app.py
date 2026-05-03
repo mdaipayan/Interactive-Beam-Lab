@@ -82,7 +82,7 @@ st.markdown("""
 }
 [data-testid="metric-container"] [data-testid="stMetricValue"] {
     font-family: var(--mono) !important;
-    font-size: 0.25rem !important;
+    font-size: 0.95rem !important;
     color: var(--text) !important;
     font-weight: 600 !important;
 }
@@ -546,18 +546,83 @@ if solved:
 
     # ── 5. DEFLECTION ────────────────────────────────────────────────────────
     with tab_def:
-        fig, ax = make_fig()
-        ax.plot(xs, np.zeros_like(xs), color=DIM_C, lw=1.4,
-                linestyle="--", label="Undeformed", zorder=2)
-        ax.fill_between(xs, Ds, 0, color=GREEN, alpha=0.15, interpolate=True)
-        ax.plot(xs, Ds, color=GREEN, linewidth=2.4, label="Deflected", zorder=3)
-        ax.axhline(0, color=GRID_C, linewidth=0.8)
-        ax.set_xlabel("x  (m)"); ax.set_ylabel("δ  (mm)")
-        style_ax(ax, "DEFLECTED SHAPE")
-        if np.any(Ds != 0):
-            annotate_peak(ax, xs, Ds, AMBER, "mm")
+        from scipy.interpolate import CubicSpline
+
+        # Smooth nodal deflections with a cubic spline
+        xs_u, ui = np.unique(xs, return_index=True)
+        Ds_u     = Ds[ui]
+        cs       = CubicSpline(xs_u, Ds_u, bc_type="not-a-knot")
+        xs_fine  = np.linspace(xs_u[0], xs_u[-1], 600)
+        Ds_fine  = cs(xs_fine)
+
+        # Visual beam half-depth in mm-axis units (10 % of deflection range)
+        d_range = max(np.ptp(Ds_fine), 1e-6)
+        h_beam  = max(d_range * 0.12, 0.5)
+
+        fig, ax = make_fig(h=4.6)
+
+        # Undeformed beam — light grey filled rectangle
+        ax.fill_between(xs_fine, h_beam, -h_beam,
+                        color="#e2e8f0", alpha=0.9, zorder=1)
+        ax.plot(xs_fine,  np.full_like(xs_fine,  h_beam), color=DIM_C, lw=1.0, zorder=2)
+        ax.plot(xs_fine,  np.full_like(xs_fine, -h_beam), color=DIM_C, lw=1.0, zorder=2)
+        ax.plot(xs_fine, np.zeros_like(xs_fine), color=DIM_C,
+                lw=0.8, linestyle="--", zorder=2, label="Undeformed centroid")
+
+        # Deflected beam — coloured band following the spline
+        top    = Ds_fine + h_beam
+        bottom = Ds_fine - h_beam
+        ax.fill_between(xs_fine, top, bottom,
+                        color=BLUE_LT, alpha=0.28, zorder=3)
+        ax.plot(xs_fine, top,    color=BLUE, lw=1.6, zorder=4)
+        ax.plot(xs_fine, bottom, color=BLUE, lw=1.6, zorder=4)
+        ax.plot(xs_fine, Ds_fine, color=BLUE, lw=2.2, zorder=5,
+                linestyle="--", alpha=0.7, label="Deflected centroid")
+
+        # Support verticals
+        for xb in [xs_u[0], xs_u[-1]]:
+            ax.axvline(xb, color=AMBER, lw=1.4, linestyle=":", zorder=6, alpha=0.65)
+
+        # Peak annotation + drop-line
+        if np.any(Ds_fine != 0):
+            i_pk  = int(np.argmax(np.abs(Ds_fine)))
+            y_pk  = Ds_fine[i_pk]
+            x_pk  = xs_fine[i_pk]
+            sign  = 1 if y_pk >= 0 else -1
+            y_txt = y_pk + sign * d_range * 0.35
+
+            ax.plot([x_pk, x_pk], [0, y_pk],
+                    color=CRIMSON, lw=1.1, linestyle=":", zorder=6, alpha=0.8)
+            ax.plot(x_pk, 0, marker="v" if y_pk < 0 else "^",
+                    color=CRIMSON, ms=8, zorder=7, clip_on=False)
+            ax.annotate(
+                f"δ_max = {y_pk:.3f} mm",
+                xy=(x_pk, y_pk + sign * h_beam * 1.1),
+                xytext=(x_pk, y_txt),
+                color=CRIMSON, fontsize=9.5, fontfamily="monospace",
+                fontweight="bold", ha="center",
+                arrowprops=dict(arrowstyle="-|>", color=CRIMSON, lw=1.1),
+            )
+
+            # Horizontal dimension: span from support to peak
+            y_dim = min(bottom) - d_range * 0.18
+            ax.annotate("", xy=(x_pk, y_dim), xytext=(xs_u[0], y_dim),
+                arrowprops=dict(arrowstyle="<->", color=DIM_C, lw=1))
+            ax.text(x_pk / 2, y_dim - d_range * 0.06,
+                    f"a = {x_pk:.2f} m", ha="center", va="top",
+                    color=DIM_C, fontsize=8, fontfamily="monospace")
+
+        ax.axhline(0, color=DIM_C, lw=0.8, zorder=2)
+        ax.set_xlabel("x  (m)", fontsize=9)
+        ax.set_ylabel("δ  (mm)   [exaggerated]", fontsize=9)
+        style_ax(ax, "DEFLECTED SHAPE  —  Cubic Spline  |  Exaggerated Scale")
+
+        pad = d_range * 0.55 + h_beam * 2.0
+        ax.set_ylim(min(Ds_fine) - pad, max(Ds_fine) + pad)
+        ax.set_xlim(xs_u[0] - L * 0.04, xs_u[-1] + L * 0.04)
+
         leg = ax.legend(fontsize=8.5, facecolor=PLOT_AX, edgecolor=GRID_C,
-                        framealpha=1)
+                        framealpha=1, loc="upper right")
         for t in leg.get_texts(): t.set_color(TEXT_C)
         fig.tight_layout(pad=1.5)
         st.pyplot(fig); plt.close(fig)
