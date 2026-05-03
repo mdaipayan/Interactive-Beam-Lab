@@ -394,12 +394,13 @@ if solved:
     # ─────────────────────────────────────────────────────────────────────────
     # TABS  (order: Structure · Reactions · Shear · Moment · Deflection)
     # ─────────────────────────────────────────────────────────────────────────
-    tab_str, tab_rxn, tab_sfd, tab_bmd, tab_def = st.tabs([
+    tab_str, tab_rxn, tab_sfd, tab_bmd, tab_def, tab_comb = st.tabs([
         "🏗  Structure",
         "📋  Reactions",
         "⚡  Shear Force",
         "🌀  Bending Moment",
         "🔽  Deflection",
+        "Combined Diagram"
     ])
 
     # ── 1. STRUCTURE ──────────────────────────────────────────────────────────
@@ -626,17 +627,83 @@ if solved:
         for t in leg.get_texts(): t.set_color(TEXT_C)
         fig.tight_layout(pad=1.5)
         st.pyplot(fig); plt.close(fig)
-# Create a new tab or section for the stacked view
-tab_stacked = st.tabs(["📊 Integrated Analysis"])[0]
+        
 
-with tab_stacked:
+#_________________________Combined Diagram_____________________________________
+with tab_comb:
     # Create a figure with 3 vertical subplots sharing the same X-axis
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(11, 12), sharex=True)
     fig.patch.set_facecolor(PLOT_BG)
 
     # 1. STRUCTURE PLOT (Top)
     ax1.plot([0, L], [0, 0], color=BLUE, linewidth=7, solid_capstyle="round", zorder=3)
-    # (Re-use your logic for drawing supports and loads here...)
+   def draw_pinned(ax, x):
+            tri = plt.Polygon(
+                [[x, 0], [x - 0.38*L/10, -0.45], [x + 0.38*L/10, -0.45]],
+                closed=True, color=AMBER, zorder=4, alpha=0.95)
+            ax.add_patch(tri)
+            ax.plot([x - 0.5*L/10, x + 0.5*L/10], [-0.52, -0.52],
+                    color=AMBER, lw=2)
+
+        def draw_fixed(ax, x, side="left"):
+            s = -1 if side == "left" else 1
+            for y in np.linspace(-0.55, 0.55, 8):
+                ax.plot([x, x + s * 0.32*L/10],
+                        [y, y + s * 0.18],
+                        color=AMBER, lw=1.3, alpha=0.75)
+            ax.plot([x, x], [-0.6, 0.6], color=AMBER, lw=3)
+
+        def draw_roller(ax, x):
+            c = plt.Circle((x, -0.3), 0.16*L/10, color=AMBER, zorder=4)
+            ax.add_patch(c)
+            ax.plot([x - 0.5*L/10, x + 0.5*L/10], [-0.48, -0.48],
+                    color=AMBER, lw=2)
+
+        if left_support == "Pinned":               draw_pinned(ax, 0)
+        elif left_support == "Fixed":              draw_fixed(ax, 0, "left")
+        if right_support == "Pinned":              draw_pinned(ax, L)
+        elif right_support == "Fixed":             draw_fixed(ax, L, "right")
+        elif right_support == "Roller (vertical)": draw_roller(ax, L)
+
+        # Point load arrow
+        if load_type in ("Point Load", "Both") and P != 0:
+            d = -1 if P < 0 else 1
+            ax.annotate("", xy=(x_load, 0.05*d), xytext=(x_load, d * 1.0),
+                arrowprops=dict(arrowstyle="-|>", color=CRIMSON, lw=2.4,
+                                mutation_scale=22))
+            ax.text(x_load, d * 1.15, f"P = {P} kN", ha="center",
+                    va="bottom" if d > 0 else "top",
+                    color=CRIMSON, fontsize=9.5, fontfamily="monospace",
+                    fontweight="bold")
+
+        # UDL
+        if load_type in ("UDL", "Both") and q != 0:
+            d = -1 if q < 0 else 1
+            xs_udl = np.linspace(0, L, 12)
+            for xi in xs_udl:
+                ax.annotate("", xy=(xi, 0.05*d), xytext=(xi, d * 0.7),
+                    arrowprops=dict(arrowstyle="-|>", color=GREEN, lw=1.4,
+                                    mutation_scale=14))
+            ax.plot([0, L], [d * 0.7, d * 0.7],
+                    color=GREEN, lw=1.8)
+            ax.text(L / 2, d * 0.88, f"w = {q} kN/m", ha="center",
+                    color=GREEN, fontsize=9.5, fontfamily="monospace",
+                    fontweight="bold")
+
+        # Dimension line
+        y_dim = -0.82
+        ax.annotate("", xy=(L, y_dim), xytext=(0, y_dim),
+            arrowprops=dict(arrowstyle="<->", color=DIM_C, lw=1))
+        ax.text(L / 2, y_dim - 0.1, f"L = {L} m", ha="center", va="top",
+                color=DIM_C, fontsize=8.5, fontfamily="monospace")
+
+        ax.set_xlim(-0.8, L + 0.8)
+        ax.set_ylim(-1.15, 1.45)
+        ax.set_xlabel("x  (m)", fontsize=9)
+        ax.set_yticks([])
+        style_ax(ax, "LOADED STRUCTURE")
+        fig.tight_layout(pad=1.5)
+        st.pyplot(fig); plt.close(fig)
     style_ax(ax1, "LOADED STRUCTURE")
     ax1.set_ylim(-1.2, 1.5)
 
