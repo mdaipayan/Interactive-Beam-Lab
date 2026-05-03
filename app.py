@@ -634,14 +634,13 @@ if solved:
 # ─────────────────────────────────────────────────────────────────────────────
 with tab_comb:
     # Create a figure with 3 vertical subplots sharing the same X-axis
-    # Increase height (h=12) to give each diagram room to breathe
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(11, 12), sharex=True)
     fig.patch.set_facecolor(PLOT_BG)
 
     # --- SUBPLOT 1: STRUCTURE ---
     ax1.plot([0, L], [0, 0], color=BLUE, linewidth=7, solid_capstyle="round", zorder=3)
     
-    # Re-use global support drawing logic
+    # Boundary Conditions
     if left_support == "Pinned":               draw_pinned(ax1, 0)
     elif left_support == "Fixed":              draw_fixed(ax1, 0, "left")
     
@@ -649,7 +648,7 @@ with tab_comb:
     elif right_support == "Fixed":             draw_fixed(ax1, L, "right")
     elif right_support == "Roller (vertical)": draw_roller(ax1, L)
 
-    # Point Load
+    # Point Load Visualization
     if load_type in ("Point Load", "Both") and P != 0:
         d = -1 if P < 0 else 1
         ax1.annotate("", xy=(x_load, 0.05*d), xytext=(x_load, d * 1.0),
@@ -657,24 +656,20 @@ with tab_comb:
         ax1.text(x_load, d * 1.15, f"P={P}kN", ha="center", color=CRIMSON, 
                  fontsize=9, fontfamily="monospace", fontweight="bold")
 
-    # UDL
-     if load_type in ("UDL", "Both") and q != 0:
-            d = -1 if q < 0 else 1
-            xs_udl = np.linspace(0, L, 12)
-            for xi in xs_udl:
-                ax.annotate("", xy=(xi, 0.05*d), xytext=(xi, d * 0.7),
-                    arrowprops=dict(arrowstyle="-|>", color=GREEN, lw=1.4,
-                                    mutation_scale=14))
-            ax.plot([0, L], [d * 0.7, d * 0.7],
-                    color=GREEN, lw=1.8)
-            ax.text(L / 2, d * 0.88, f"w = {q} kN/m", ha="center",
-                    color=GREEN, fontsize=9.5, fontfamily="monospace",
-                    fontweight="bold")
-
+    # UDL Visualization (Fixed ax variable bug)
+    if load_type in ("UDL", "Both") and q != 0:
+        d = -1 if q < 0 else 1
+        xs_udl = np.linspace(0, L, 12)
+        for xi in xs_udl:
+            ax1.annotate("", xy=(xi, 0.05*d), xytext=(xi, d * 0.7),
+                        arrowprops=dict(arrowstyle="-|>", color=GREEN, lw=1.4, mutation_scale=14))
+        ax1.plot([0, L], [d * 0.7, d * 0.7], color=GREEN, lw=1.8)
+        ax1.text(L / 2, d * 0.88, f"w={q}kN/m", ha="center", color=GREEN, 
+                 fontsize=9, fontfamily="monospace", fontweight="bold")
 
     style_ax(ax1, "LOADED STRUCTURE")
     ax1.set_ylim(-1.2, 1.5)
-    ax1.set_yticks([]) # Hide Y-axis for structure
+    ax1.get_yaxis().set_visible(False) # Hide Y-axis for cleaner structure view
 
     # --- SUBPLOT 2: SHEAR FORCE ---
     ax2.fill_between(xs, Vs, 0, where=(Vs >= 0), color=BLUE_LT, alpha=0.20, interpolate=True)
