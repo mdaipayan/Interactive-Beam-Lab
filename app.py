@@ -356,7 +356,7 @@ if solved:
     k2.metric("↕  R_right",  f"{R_rV:+.2f} kN")
     k3.metric("⟳  M_left",   f"{R_lM:+.2f} kN·m")
     k4.metric("⟳  M_right",  f"{R_rM:+.2f} kN·m")
-    k5.metric("⬇  δ_max",    f"{max_def_mm:.3f} mm")
+    k5.metric("⬇  δ_max",    f"{max_def_mm:.2f} mm")
 
     st.markdown("<div style='margin:16px 0'></div>", unsafe_allow_html=True)
 
@@ -485,9 +485,9 @@ if solved:
             st.markdown("##### Support Reactions")
             st.table({
                 "Location":   ["Left",           "Right"],
-                "V  (kN)":    [f"{R_lV:+.4f}",   f"{R_rV:+.4f}"],
-                "H  (kN)":    [f"{R_lH:+.4f}",   "—"],
-                "M  (kN·m)":  [f"{R_lM:+.4f}",   f"{R_rM:+.4f}"],
+                "V  (kN)":    [f"{R_lV:+.2f}",   f"{R_rV:+.2f}"],
+                "H  (kN)":    [f"{R_lH:+.2f}",   "—"],
+                "M  (kN·m)":  [f"{R_lM:+.2f}",   f"{R_rM:+.2f}"],
             })
         with c2:
             st.markdown("##### Configuration")
@@ -495,7 +495,7 @@ if solved:
                 "Parameter": ["L", "E", "I", "Left BC", "Right BC", "Load", "δ_max"],
                 "Value":     [f"{L} m", f"{E_GPa} GPa", f"{I_cm4} cm⁴",
                               left_support, right_support, load_type,
-                              f"{max_def_mm:.4f} mm"],
+                              f"{max_def_mm:.2f} mm"],
             })
 
         if max_def_m > 0:
@@ -596,7 +596,7 @@ if solved:
             ax.plot(x_pk, 0, marker="v" if y_pk < 0 else "^",
                     color=CRIMSON, ms=8, zorder=7, clip_on=False)
             ax.annotate(
-                f"δ_max = {y_pk:.3f} mm",
+                f"δ_max = {y_pk:.2f} mm",
                 xy=(x_pk, y_pk + sign * h_beam * 1.1),
                 xytext=(x_pk, y_txt),
                 color=CRIMSON, fontsize=9.5, fontfamily="monospace",
