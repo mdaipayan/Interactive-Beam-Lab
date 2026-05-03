@@ -82,7 +82,7 @@ st.markdown("""
 }
 [data-testid="metric-container"] [data-testid="stMetricValue"] {
     font-family: var(--mono) !important;
-    font-size: 1.35rem !important;
+    font-size: 0.95rem !important;
     color: var(--text) !important;
     font-weight: 600 !important;
 }
