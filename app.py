@@ -113,25 +113,28 @@ except Exception as exc:
 # ── Results ───────────────────────────────────────────────────────────────────
 if solved:
     # --- Collect numerical results ---
-    disp  = ss.get_node_displacements()
-    react = ss.get_support_reaction_forces()
+    # ss.reaction_forces → {node_id: NodeResults}  with .Fx .Fy .Mz attributes
+    react = ss.reaction_forces          # dict[int, NodeResults]
 
-    # Max vertical displacement
-    max_def_mm = max(abs(v["Fy"]) * 1e3 for v in disp.values()) if disp else 0.0
-
-    # Collect reactions for left & right nodes
     node_left_id  = 1
     node_right_id = N_ELEM + 1
 
-    def get_reaction(node_id, component):
-        r = react.get(node_id, {})
-        return r.get(component, 0.0)
+    def get_reaction(node_id, attr):
+        node = react.get(node_id)
+        return getattr(node, attr, 0.0) if node is not None else 0.0
 
     R_left_V  = get_reaction(node_left_id,  "Fy")
     R_right_V = get_reaction(node_right_id, "Fy")
     R_left_H  = get_reaction(node_left_id,  "Fx")
     R_left_M  = get_reaction(node_left_id,  "Mz")
     R_right_M = get_reaction(node_right_id, "Mz")
+
+    # Max vertical displacement across all nodes
+    all_nodes  = ss.node_map               # dict[int, Node]
+    max_def_mm = max(
+        abs(n.uy) * 1e3
+        for n in all_nodes.values()
+    ) if all_nodes else 0.0
 
     # ── Metrics row ───────────────────────────────────────────────────────────
     st.markdown("---")
