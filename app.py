@@ -214,7 +214,7 @@ def style_ax(ax, title=""):
     ax.grid(True, color=GRID_C, linewidth=0.5, linestyle="--", alpha=0.6)
     if title:
         ax.set_title(title, color=CYAN, fontsize=9.5,
-                     fontfamily="monospace", pad=10, letter_spacing=1)
+                     fontfamily="monospace", pad=10)
 
 def make_fig(h=3.8):
     fig, ax = plt.subplots(figsize=(11, h))
